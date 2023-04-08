@@ -43,6 +43,9 @@ cchar_t tr,tl,br,bl,s,h;
 
 float maxfactor;
 
+int row = LINES;
+int col = COLS;
+
 WINDOW* createWindow(struct monitor m){
   int height, width;
   // float hfactor = 7000.0f;
@@ -50,14 +53,14 @@ WINDOW* createWindow(struct monitor m){
   float wfactor = hfactor/2;
 
   if(m.transform%2){
-    height = floor(LINES * (m.width/wfactor/m.scale));
-    width  = floor(COLS  * (m.height/hfactor/m.scale));
+    height = floor(row * (m.width/wfactor/m.scale));
+    width  = floor(col  * (m.height/hfactor/m.scale));
   } else {
-    height = floor(LINES * (m.height/wfactor/m.scale));
-    width  = floor(COLS  * (m.width/hfactor/m.scale));
+    height = floor(row * (m.height/wfactor/m.scale));
+    width  = floor(col  * (m.width/hfactor/m.scale));
   }
-  int y    = floor(LINES * (m.y/wfactor));
-  int x    = floor(COLS  * (m.x/hfactor));
+  int y    = floor(row * (m.y/wfactor));
+  int x    = floor(col  * (m.x/hfactor));
 
     WINDOW *win = newwin(height, width, y, x);
     box_set(win, 0, 0); // Create a box around the window
@@ -76,11 +79,21 @@ WINDOW* createWindow(struct monitor m){
 }
 
 int main (int argc, char* argv[]) {
+
+    mmask_t old = 0;
+
     initscr();       // Initialize ncurses screen
+    cbreak();
     noecho();        // Don't display user input
+    keypad(stdscr, TRUE);
+    // Enable mouse support and track all mouse events
+    // mousemask(BUTTON1_CLICKED | BUTTON2_CLICKED | BUTTON3_CLICKED | BUTTON4_PRESSED | BUTTON5_PRESSED | REPORT_MOUSE_POSITION | ALL_MOUSE_EVENTS, &old);
+    mousemask(BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON3_CLICKED |  REPORT_MOUSE_POSITION | ALL_MOUSE_EVENTS, &old);
+    // Set the mouse click interval to 1000 milliseconds (1 second)
+    mouseinterval(250);
+
     curs_set(0);     // Hide cursor
 
-    keypad(stdscr, TRUE);
 
     setlocale(LC_ALL, "");
     std::vector<WINDOW*> windows;
@@ -115,9 +128,6 @@ int main (int argc, char* argv[]) {
     noecho();
     keypad(stdscr, TRUE);
     });
-
-    int row = LINES;
-    int col = COLS;
 
     int maxwidth = 0;
     for (const auto &monitor : root){
@@ -162,6 +172,17 @@ int main (int argc, char* argv[]) {
           wrefresh(win);
           if (ch == 0)
             std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        }
+      } else if (ch == KEY_MOUSE) {
+        MEVENT event;
+        if (getmouse(&event) == OK) {
+          // mvprintw(1, 1, "Mouse event: %d at (%d,%d)", event.bstate, event.x, event.y);
+          if(event.bstate & BUTTON1_PRESSED){
+          // mvprintw(2, 1, "BUTTON1_PRESSED");
+          } else if(event.bstate & BUTTON1_RELEASED){
+          // mvprintw(2, 1, "BUTTON1_RELEASED");
+          }
+          refresh();
         }
       } else {
         break;
