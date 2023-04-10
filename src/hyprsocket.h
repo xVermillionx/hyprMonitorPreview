@@ -3,11 +3,12 @@
 
 // extern "C" {
 
-#include <stdio.h>
+#include <stdio.h>  // printf
 #include <sys/socket.h>
-#include <unistd.h>
-#include <sys/un.h>
+#include <unistd.h> // close
+#include <sys/un.h> // sockaddr_un
 #include <stdlib.h> // setenv, getenv
+
 // cpp
 #include <atomic>
 
@@ -59,7 +60,7 @@ typedef void(*hook_fn)(char*);
 // void setDisplayRemote(char* & cur_display, std::atomic<bool>& mutex){
 void setDisplayRemote(std::shared_ptr<char*>& cur_display, std::atomic<bool>& mutex){
 	int len;
-	char buff[8192];
+	char buff[8000];
 	int err = 0;
   while (!mutex){
     if ((len = recv(fd, buff, 8192, 0)) < 0) {
