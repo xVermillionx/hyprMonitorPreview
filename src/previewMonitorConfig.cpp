@@ -50,7 +50,12 @@ float maxfactor;
 int row = LINES;
 int col = COLS;
 
-WINDOW* createWindow(struct monitor m){
+typedef struct WINDOW2 {
+  struct monitor mon;
+  WINDOW* win;
+} WINDOW2;
+
+WINDOW2 createWindow(struct monitor m){
   int height, width;
   // float hfactor = 7000.0f;
   float hfactor = maxfactor;
@@ -81,7 +86,8 @@ WINDOW* createWindow(struct monitor m){
     mvwprintw(win,hcenter+1,wcenter-dim.length()/2,dim.c_str());
     // mvwprintw(win,1,1,m.name);
 
-    return win;
+    WINDOW2 ret{m, win};
+    return ret;
 }
 
 void chg_cchar_col(cchar_t &c, NCURSES_PAIRS_T col_pair){
@@ -126,7 +132,7 @@ int main (int argc, char* argv[]) {
 
 
     setlocale(LC_ALL, "");
-    std::vector<WINDOW*> windows;
+    std::vector<WINDOW2> windows;
 
     setcchar(&tl, L"╭", WA_NORMAL, 0, NULL);
     setcchar(&bl, L"╰", WA_NORMAL, 0, NULL);
@@ -252,14 +258,15 @@ int main (int argc, char* argv[]) {
             // m.print();
             windows.push_back(createWindow(m));
             if(focused){
-              wbkgd(windows.back(),COLOR_PAIR(4)); // Set Color of window
+              wbkgd(windows.back().win,COLOR_PAIR(4)); // Set Color of window
               chg_border_col(0); // set borders to normal
               // wcolor_set(windows.back(),COLOR_PAIR(5),nullptr); ??
             }
           }
 
           refresh();
-          for(auto win : windows){
+          for(auto& win2 : windows){
+            WINDOW* win = win2.win;
             wrefresh(win);
             if (ch == 0)
               std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -269,12 +276,19 @@ int main (int argc, char* argv[]) {
           MEVENT event;
           if (getmouse(&event) == OK) {
             if(event.bstate & BUTTON1_PRESSED){
-              for(auto win : windows){
+              for(auto& win2 : windows){
+                WINDOW* win = win2.win;
+                bool focused = !std::strcmp(win2.mon.name, (char*)pre_mon);
                 refresh();
                 if(wenclose(win, event.y, event.x)){
                   chg_border_col(3);
                 } else {
-                  chg_border_col(0);
+                  if(focused){
+                    chg_border_col(4);
+                  }
+                  else{
+                    chg_border_col(0);
+                  }
                 }
                 wborder_set(win, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
                 wrefresh(win);
@@ -282,7 +296,8 @@ int main (int argc, char* argv[]) {
               }
             // mvprintw(2, 1, "BUTTON1_PRESSED");
             } else if(event.bstate & BUTTON1_RELEASED){
-              for(auto& win : windows){
+              for(auto& win2 : windows){
+                WINDOW* win = win2.win;
                 chg_border_col(0);
                 wborder_set(win, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
                 wrefresh(win);
@@ -296,8 +311,10 @@ int main (int argc, char* argv[]) {
     } while((ch = getch()) != 'q');
 
     // Clean up and exit
-    for(auto win : windows){
+    for(auto& win2 : windows){
+      WINDOW* win = win2.win;
       delwin(win);
+      win2.win = nullptr;
     }
     endwin();
     mutex = true;
