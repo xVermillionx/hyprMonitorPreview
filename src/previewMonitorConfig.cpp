@@ -282,16 +282,17 @@ int main (int argc, char* argv[]) {
                 refresh();
                 if(wenclose(win, event.y, event.x)){
                   chg_border_col(3);
-                } else {
+                /* else {
                   if(focused){
                     chg_border_col(4);
                   }
                   else{
                     chg_border_col(0);
                   }
+                } */
+                  wborder_set(win, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
+                  wrefresh(win);
                 }
-                wborder_set(win, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
-                wrefresh(win);
                 // mvprintw(1, 1, "Mouse event: %d at (%d,%d)", event.bstate, event.x, event.y);
               }
             // mvprintw(2, 1, "BUTTON1_PRESSED");
