@@ -118,7 +118,7 @@ int main (int argc, char* argv[]) {
     // mousemask(BUTTON1_CLICKED | BUTTON2_CLICKED | BUTTON3_CLICKED | BUTTON4_PRESSED | BUTTON5_PRESSED | REPORT_MOUSE_POSITION | ALL_MOUSE_EVENTS, &old);
     mousemask(BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON3_CLICKED |  REPORT_MOUSE_POSITION | ALL_MOUSE_EVENTS, &old);
     // Set the mouse click interval to 1000 milliseconds (1 second)
-    mouseinterval(250);
+    mouseinterval(80);
 
     curs_set(0);     // Hide cursor
 
@@ -254,10 +254,25 @@ int main (int argc, char* argv[]) {
         } else if (ch == KEY_MOUSE) {
           MEVENT event;
           if (getmouse(&event) == OK) {
-            // mvprintw(1, 1, "Mouse event: %d at (%d,%d)", event.bstate, event.x, event.y);
             if(event.bstate & BUTTON1_PRESSED){
+              for(auto win : windows){
+                refresh();
+                if(wenclose(win, event.y, event.x)){
+                  chg_border_col(3);
+                } else {
+                  chg_border_col(0);
+                }
+                wborder_set(win, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
+                wrefresh(win);
+                mvprintw(1, 1, "Mouse event: %d at (%d,%d)", event.bstate, event.x, event.y);
+              }
             // mvprintw(2, 1, "BUTTON1_PRESSED");
             } else if(event.bstate & BUTTON1_RELEASED){
+              for(auto& win : windows){
+                chg_border_col(0);
+                wborder_set(win, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
+                wrefresh(win);
+              }
             // mvprintw(2, 1, "BUTTON1_RELEASED");
             }
             refresh();
