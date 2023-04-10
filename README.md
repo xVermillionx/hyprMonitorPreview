@@ -10,3 +10,10 @@ cmake -B build .
 
 make -C build
 ```
+
+## Possible Future Additions
+
+- Live Update of Monitor Windows (size, position, rotation, etc.)
+- Change current config of Monitor Windows by click and dragging (size, position, transform by menu?)
+- Append changes to config or output on stdout
+
