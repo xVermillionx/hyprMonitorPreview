@@ -5,6 +5,8 @@
 
 #include <vector>
 #include <thread>
+#include <atomic>
+#include <memory>
 #include <chrono>
 #include <sstream>
 // #include <algorithm>
@@ -17,6 +19,7 @@
 #include <cmath>
 
 #include "runUnixCMD.h"
+#include "hyprsocket.h"
 
 enum rotation {
   NORMAL = 0,
@@ -63,8 +66,10 @@ WINDOW* createWindow(struct monitor m){
   int x    = floor(col  * (m.x/hfactor));
 
     WINDOW *win = newwin(height, width, y, x);
+    // wattron(win, COLOR_PAIR(10));
     box_set(win, 0, 0); // Create a box around the window
     wborder_set(win, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
+    // wattroff(win, COLOR_PAIR(10));
 
     int hcenter = height/2;
     int wcenter = width/2;
@@ -76,6 +81,29 @@ WINDOW* createWindow(struct monitor m){
     // mvwprintw(win,1,1,m.name);
 
     return win;
+}
+
+void chg_cchar_col(cchar_t &c, NCURSES_PAIRS_T col_pair){
+  c.ext_color = col_pair;
+}
+
+void chg_border_col(NCURSES_PAIRS_T col_pair){
+  chg_cchar_col(tr, col_pair);
+  chg_cchar_col(tl, col_pair);
+  chg_cchar_col(br, col_pair);
+  chg_cchar_col(bl, col_pair);
+  chg_cchar_col(s,  col_pair);
+  chg_cchar_col(h,  col_pair);
+}
+
+
+// void hyprSocketFocusMonitor(std::atomic<char[50]> &cur_mon, std::atomic<bool> &mutex) {
+// void hyprSocketFocusMonitor(char[50] &cur_mon, std::atomic<bool> &mutex) {
+// void hyprSocketFocusMonitor(char* &cur_mon, std::atomic<bool> &mutex) {
+void hyprSocketFocusMonitor(std::shared_ptr<char*> &cur_mon, std::atomic<bool> &mutex) {
+  initSocketConnection();
+  setDisplayRemote(cur_mon, mutex);
+  closeSocketConnection();
 }
 
 int main (int argc, char* argv[]) {
@@ -98,12 +126,31 @@ int main (int argc, char* argv[]) {
     setlocale(LC_ALL, "");
     std::vector<WINDOW*> windows;
 
-    setcchar(&tl, L"╭", WA_NORMAL, 4, NULL);
-    setcchar(&bl, L"╰", WA_NORMAL, 4, NULL);
-    setcchar(&tr, L"╮", WA_NORMAL, 4, NULL);
-    setcchar(&br, L"╯", WA_NORMAL, 4, NULL);
-    setcchar(&s,  L"│", WA_NORMAL, 4, NULL);
-    setcchar(&h,  L"─", WA_NORMAL, 4, NULL);
+    setcchar(&tl, L"╭", WA_NORMAL, 0, NULL);
+    setcchar(&bl, L"╰", WA_NORMAL, 0, NULL);
+    setcchar(&tr, L"╮", WA_NORMAL, 0, NULL);
+    setcchar(&br, L"╯", WA_NORMAL, 0, NULL);
+    setcchar(&s,  L"│", WA_NORMAL, 0, NULL);
+    setcchar(&h,  L"─", WA_NORMAL, 0, NULL);
+
+    if(!has_colors() || !can_change_color()){
+      printw("Terminal doesnt support colors or cannot change them!");
+      return -1;
+    }
+    start_color();
+    // use_default_colors();
+    init_pair(1, COLOR_WHITE, COLOR_BLACK);
+    init_pair(2, COLOR_BLACK, COLOR_BLUE);
+    init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(4, COLOR_BLUE, 0);
+    // init_pair(5, 0, 0);
+
+    /* attron(COLOR_PAIR(5));
+    printw("Test\n");
+    attroff(COLOR_PAIR(5));
+
+    refresh(); // Clear the screen */
+            // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     Json::Value root;
     Json::Reader reader;
@@ -129,6 +176,13 @@ int main (int argc, char* argv[]) {
     keypad(stdscr, TRUE);
     });
 
+    std::atomic<bool> mutex(false);
+    // char cur_mon[50]{0};
+    std::shared_ptr<char*> cur_mon = std::make_shared<char*>(new char[50]{0});
+    // std::atomic<char[50]> cur_mon{0};
+    std::thread t(hyprSocketFocusMonitor, std::ref(cur_mon), std::ref(mutex));
+    t.detach();
+
     int maxwidth = 0;
     for (const auto &monitor : root){
       int tmpmaxwidth = monitor["width"].asInt() + monitor["x"].asInt();
@@ -149,52 +203,72 @@ int main (int argc, char* argv[]) {
 
     // Wait for user input
     int ch = 0;
-    while(1) {
-      if(ch == 0 || ch == KEY_RESIZE){
-        getmaxyx(stdscr, row, col);
-        for (const auto &monitor : root){
-          struct monitor m = {
-            monitor["name"].asString().c_str(),
-            monitor["height"].asInt(),
-            monitor["width"].asInt(),
-            monitor["x"].asInt(),
-            monitor["y"].asInt(),
-            monitor["scale"].asFloat(),
-            (enum rotation)monitor["transform"].asInt(),
-            monitor["id"].asInt()
-          };
-          m.print();
-          windows.push_back(createWindow(m));
-        }
-
-        refresh();
-        for(auto win : windows){
-          wrefresh(win);
-          if (ch == 0)
-            std::this_thread::sleep_for(std::chrono::milliseconds(250));
-        }
-      } else if (ch == KEY_MOUSE) {
-        MEVENT event;
-        if (getmouse(&event) == OK) {
-          // mvprintw(1, 1, "Mouse event: %d at (%d,%d)", event.bstate, event.x, event.y);
-          if(event.bstate & BUTTON1_PRESSED){
-          // mvprintw(2, 1, "BUTTON1_PRESSED");
-          } else if(event.bstate & BUTTON1_RELEASED){
-          // mvprintw(2, 1, "BUTTON1_RELEASED");
-          }
-          refresh();
-        }
-      } else {
-        break;
+    char pre_mon[50];
+    std::strcpy(pre_mon, *cur_mon.get());
+    nodelay(stdscr, TRUE);
+    do {
+      if(std::strcmp(*cur_mon.get(), pre_mon)){
+        std::strcpy(pre_mon, *cur_mon.get());
       }
-      ch = getch();
-    }
+      if(ch != ERR){
+        if(ch == 0 || ch == KEY_RESIZE){
+          getmaxyx(stdscr, row, col);
+          for (const auto &monitor : root){
+            // old bool focused = monitor["focused"].asBool();
+            bool focused = !std::strcmp(monitor["name"].asCString(), (char*)pre_mon);
+            // monitor["focused"] = focused;
+
+            if(focused){
+              chg_border_col(4);
+            }
+            struct monitor m = {
+              // cur_mon,
+              monitor["name"].asCString(),
+              monitor["height"].asInt(),
+              monitor["width"].asInt(),
+              monitor["x"].asInt(),
+              monitor["y"].asInt(),
+              monitor["scale"].asFloat(),
+              (enum rotation)monitor["transform"].asInt(),
+              monitor["id"].asInt()
+            };
+            m.print();
+            windows.push_back(createWindow(m));
+            if(focused){
+              wbkgd(windows.back(),COLOR_PAIR(4)); // Set Color of window
+              chg_border_col(0); // set borders to normal
+              // wcolor_set(windows.back(),COLOR_PAIR(5),nullptr); ??
+            }
+          }
+
+          refresh();
+          for(auto win : windows){
+            wrefresh(win);
+            if (ch == 0)
+              std::this_thread::sleep_for(std::chrono::milliseconds(250));
+          }
+        } else if (ch == KEY_MOUSE) {
+          MEVENT event;
+          if (getmouse(&event) == OK) {
+            // mvprintw(1, 1, "Mouse event: %d at (%d,%d)", event.bstate, event.x, event.y);
+            if(event.bstate & BUTTON1_PRESSED){
+            // mvprintw(2, 1, "BUTTON1_PRESSED");
+            } else if(event.bstate & BUTTON1_RELEASED){
+            // mvprintw(2, 1, "BUTTON1_RELEASED");
+            }
+            refresh();
+          }
+        }
+      }
+    } while((ch = getch()) != 'q');
 
     // Clean up and exit
     for(auto win : windows){
       delwin(win);
     }
     endwin();
+    mutex = true;
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
     return 0;
 }
 
