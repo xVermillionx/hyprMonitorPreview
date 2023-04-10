@@ -298,7 +298,13 @@ int main (int argc, char* argv[]) {
             } else if(event.bstate & BUTTON1_RELEASED){
               for(auto& win2 : windows){
                 WINDOW* win = win2.win;
-                chg_border_col(0);
+                bool focused = !std::strcmp(win2.mon.name, (char*)pre_mon);
+                  if(focused){
+                    chg_border_col(4); // TODO: remove wenn fixed flicker of probably creating multiple windows
+                  }
+                  else{
+                    chg_border_col(0);
+                  }
                 wborder_set(win, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
                 wrefresh(win);
               }
