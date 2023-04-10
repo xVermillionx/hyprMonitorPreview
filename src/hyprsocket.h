@@ -57,8 +57,10 @@ typedef void(*hook_fn)(char*);
 
 // void setDisplayRemote(std::atomic<char[50]>& cur_display, std::atomic<bool>& mutex){
 // void setDisplayRemote(char[50]& cur_display, std::atomic<bool>& mutex){
-// void setDisplayRemote(char* & cur_display, std::atomic<bool>& mutex){
-void setDisplayRemote(std::shared_ptr<char*>& cur_display, std::atomic<bool>& mutex){
+#include <mutex>
+extern std::mutex charLock;
+void setDisplayRemote(char* cur_display, std::atomic<bool>& mutex){
+// void setDisplayRemote(std::shared_ptr<char[]>& cur_display, std::atomic<bool>& mutex){
 	int len;
 	char buff[8000];
 	int err = 0;
@@ -73,7 +75,10 @@ void setDisplayRemote(std::shared_ptr<char*>& cur_display, std::atomic<bool>& mu
       tok = strtok(tok,">>");
       tok = strtok(NULL,">>");
       tok = strtok(tok,",");
-      strcpy(*cur_display.get(), tok);
+      // strcpy(cur_display.get(), tok);
+      charLock.lock();
+      strcpy(cur_display, tok);
+      charLock.unlock();
       // printf ("%s",buff);
       // printf ("%s\n",tok);
     }

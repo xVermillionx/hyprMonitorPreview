@@ -7,6 +7,7 @@
 #include <thread>
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <chrono>
 #include <sstream>
 // #include <algorithm>
@@ -96,11 +97,12 @@ void chg_border_col(NCURSES_PAIRS_T col_pair){
   chg_cchar_col(h,  col_pair);
 }
 
+std::mutex charLock;
 
 // void hyprSocketFocusMonitor(std::atomic<char[50]> &cur_mon, std::atomic<bool> &mutex) {
 // void hyprSocketFocusMonitor(char[50] &cur_mon, std::atomic<bool> &mutex) {
-// void hyprSocketFocusMonitor(char* &cur_mon, std::atomic<bool> &mutex) {
-void hyprSocketFocusMonitor(std::shared_ptr<char*> &cur_mon, std::atomic<bool> &mutex) {
+void hyprSocketFocusMonitor(char* cur_mon, std::atomic<bool> &mutex) {
+// void hyprSocketFocusMonitor(std::shared_ptr<char[]> &cur_mon, std::atomic<bool> &mutex) {
   initSocketConnection();
   setDisplayRemote(cur_mon, mutex);
   closeSocketConnection();
@@ -177,10 +179,9 @@ int main (int argc, char* argv[]) {
     });
 
     std::atomic<bool> mutex(false);
-    // char cur_mon[50]{0};
-    std::shared_ptr<char*> cur_mon = std::make_shared<char*>(new char[50]{0});
-    // std::atomic<char[50]> cur_mon{0};
-    std::thread t(hyprSocketFocusMonitor, std::ref(cur_mon), std::ref(mutex));
+    // std::shared_ptr<char[]> cur_mon = std::make_shared<char[]>(50); // cpp20
+    char cur_mon[50] = {0};
+    std::thread t(hyprSocketFocusMonitor, cur_mon, std::ref(mutex));
     t.detach();
 
     int maxwidth = 0;
@@ -204,14 +205,25 @@ int main (int argc, char* argv[]) {
     // Wait for user input
     int ch = 0;
     char pre_mon[50];
-    std::strcpy(pre_mon, *cur_mon.get());
+    // std::strcpy(pre_mon, cur_mon.get());
+    charLock.lock();
+    std::strcpy(pre_mon, cur_mon);
+    charLock.unlock();
+    bool chg = false;
     nodelay(stdscr, TRUE);
     do {
-      if(std::strcmp(*cur_mon.get(), pre_mon)){
-        std::strcpy(pre_mon, *cur_mon.get());
+      charLock.lock();
+      /* if(std::strcmp(cur_mon.get(), pre_mon)){
+        std::strcpy(pre_mon, cur_mon.get());
+        chg = true;
+      } */
+      if(std::strcmp(cur_mon, pre_mon)){
+        std::strcpy(pre_mon, cur_mon);
+        chg = true;
       }
-      if(ch != ERR){
-        if(ch == 0 || ch == KEY_RESIZE){
+      charLock.unlock();
+      if(ch != ERR || chg){
+        if(ch == 0 || ch == KEY_RESIZE || chg){
           getmaxyx(stdscr, row, col);
           for (const auto &monitor : root){
             bool focused;
@@ -226,7 +238,8 @@ int main (int argc, char* argv[]) {
               chg_border_col(4);
             }
             struct monitor m = {
-              // cur_mon,
+              // cur_mon.get(),
+              // pre_mon,
               monitor["name"].asCString(),
               monitor["height"].asInt(),
               monitor["width"].asInt(),
@@ -251,6 +264,7 @@ int main (int argc, char* argv[]) {
             if (ch == 0)
               std::this_thread::sleep_for(std::chrono::milliseconds(250));
           }
+          chg = false;
         } else if (ch == KEY_MOUSE) {
           MEVENT event;
           if (getmouse(&event) == OK) {
@@ -264,7 +278,7 @@ int main (int argc, char* argv[]) {
                 }
                 wborder_set(win, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
                 wrefresh(win);
-                mvprintw(1, 1, "Mouse event: %d at (%d,%d)", event.bstate, event.x, event.y);
+                // mvprintw(1, 1, "Mouse event: %d at (%d,%d)", event.bstate, event.x, event.y);
               }
             // mvprintw(2, 1, "BUTTON1_PRESSED");
             } else if(event.bstate & BUTTON1_RELEASED){
