@@ -214,8 +214,12 @@ int main (int argc, char* argv[]) {
         if(ch == 0 || ch == KEY_RESIZE){
           getmaxyx(stdscr, row, col);
           for (const auto &monitor : root){
-            // old bool focused = monitor["focused"].asBool();
-            bool focused = !std::strcmp(monitor["name"].asCString(), (char*)pre_mon);
+            bool focused;
+            if(!*pre_mon){
+              focused = monitor["focused"].asBool();
+            } else {
+              focused = !std::strcmp(monitor["name"].asCString(), (char*)pre_mon);
+            }
             // monitor["focused"] = focused;
 
             if(focused){
