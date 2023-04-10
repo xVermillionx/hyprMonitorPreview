@@ -138,11 +138,12 @@ int main (int argc, char* argv[]) {
       return -1;
     }
     start_color();
-    // use_default_colors();
     init_pair(1, COLOR_WHITE, COLOR_BLACK);
     init_pair(2, COLOR_BLACK, COLOR_BLUE);
     init_pair(3, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(4, COLOR_BLUE, 0);
+    use_default_colors(); //Set colors to normal
+    init_pair(4, COLOR_BLUE, -1);
+    use_default_colors(); //Set colors to normal
     // init_pair(5, 0, 0);
 
     /* attron(COLOR_PAIR(5));
@@ -236,7 +237,7 @@ int main (int argc, char* argv[]) {
               (enum rotation)monitor["transform"].asInt(),
               monitor["id"].asInt()
             };
-            m.print();
+            // m.print();
             windows.push_back(createWindow(m));
             if(focused){
               wbkgd(windows.back(),COLOR_PAIR(4)); // Set Color of window
