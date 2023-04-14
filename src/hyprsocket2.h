@@ -22,7 +22,9 @@ static char hs2_SERVER_SOCK_FILE[100] = {0};
 void hs2_closeSocketConnection() {
 	if (hs2_fd >= 0) {
 		close(hs2_fd);
+#ifdef DEBUG
     printf("Closed Socket: %d\n", hs2_fd);
+#endif
 	}
 }
 
@@ -60,30 +62,33 @@ extern std::mutex charLock;
 void setDisplayRemote(char* cur_display, std::atomic<bool>& mutex){
 // void setDisplayRemote(std::shared_ptr<char[]>& cur_display, std::atomic<bool>& mutex){
 	int len;
-	char buff[8000];
+  const size_t size = 8000;
+	char buff[size];
 	int err = 0;
   while (!mutex){
-    if ((len = recv(hs2_fd, buff, 8192, 0)) < 0) {
+    if ((len = (int)recv(hs2_fd, buff, size, 0)) < 0) {
       perror("recv");
       err = 4;
     }
     // printf ("receive %d %s\n", len, buff);
-    if(!strncmp("focusedmon", buff, strlen("focusedmon"))){
-      char* tok = strtok(buff,"\n");
-      tok = strtok(tok,">>");
-      tok = strtok(NULL,">>");
-      tok = strtok(tok,",");
-      // strcpy(cur_display.get(), tok);
-      charLock.lock();
-      strcpy(cur_display, tok);
-      charLock.unlock();
-      // printf ("%s",buff);
-      // printf ("%s\n",tok);
-    }
-    else if(!strncmp("monitorremoved", buff, strlen("monitorremoved"))){
-      charLock.lock();
-      strcpy(cur_display, strtok(buff,"\n"));
-      charLock.unlock();
+    if(!err){
+      if(!strncmp("focusedmon", buff, strlen("focusedmon"))){
+        char* tok = strtok(buff,"\n");
+        tok = strtok(tok,">>");
+        tok = strtok(NULL,">>");
+        tok = strtok(tok,",");
+        // strcpy(cur_display.get(), tok);
+        charLock.lock();
+        strcpy(cur_display, tok);
+        charLock.unlock();
+        // printf ("%s",buff);
+        // printf ("%s\n",tok);
+      }
+      else if(!strncmp("monitorremoved", buff, strlen("monitorremoved"))){
+        charLock.lock();
+        strcpy(cur_display, strtok(buff,"\n"));
+        charLock.unlock();
+      }
     }
   }
 }

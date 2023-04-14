@@ -75,11 +75,11 @@ const char* sendCommandandRecieve(const char* command){
 	int err = 0;
   // [flag(s)]/command args
 
-  if (send(hs_fd, command, strlen(command), 0) == -1) {
+  if (!err && send(hs_fd, command, strlen(command), 0) == -1) {
     perror("send");
     err = 5;
   }
-  if ((len = recv(hs_fd, hs_buff, hs_size, 0)) < 0) {
+  if (!err && (len = (int)recv(hs_fd, hs_buff, hs_size, 0)) < 0) {
     perror("recv");
     err = 4;
   }

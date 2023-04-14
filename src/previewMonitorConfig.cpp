@@ -157,7 +157,7 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
       return 1;
     };
 
-    signal(SIGWINCH, [](int sig)->void {
+    signal(SIGWINCH, [](int __attribute__((unused)) sig)->void {
             endwin(); // End curses mode
     refresh(); // Clear the screen
     // Handle the resize event here
@@ -189,9 +189,9 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
         maxheight = tmpmaxheight;
     }
     if (maxheight < maxwidth){
-      maxfactor = maxwidth;
+      maxfactor = (float)maxwidth;
     } else {
-      maxfactor = maxheight;
+      maxfactor = (float)maxheight;
     }
 
     // Wait for user input
