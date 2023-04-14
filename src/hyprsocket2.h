@@ -22,8 +22,8 @@ static char hs2_SERVER_SOCK_FILE[100] = {0};
 void hs2_closeSocketConnection() {
 	if (hs2_fd >= 0) {
 		close(hs2_fd);
+    printf("Closed Socket: %d\n", hs2_fd);
 	}
-  printf("Closed Socket\n");
 }
 
 int hs2_initSocketConnection() {
@@ -79,6 +79,11 @@ void setDisplayRemote(char* cur_display, std::atomic<bool>& mutex){
       charLock.unlock();
       // printf ("%s",buff);
       // printf ("%s\n",tok);
+    }
+    else if(!strncmp("monitorremoved", buff, strlen("monitorremoved"))){
+      charLock.lock();
+      strcpy(cur_display, strtok(buff,"\n"));
+      charLock.unlock();
     }
   }
 }

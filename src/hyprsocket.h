@@ -22,15 +22,14 @@ void hs_closeSocketConnection() {
 	if (hs_fd >= 0) {
     unlink(hs_CLIENT_SOCK_FILE);
 		close(hs_fd);
+    // printf("Closed Socket: %d\n", hs_fd);
 	}
-  printf("Closed Socket\n");
 }
 
 int hs_initSocketConnection() {
 	int err = 0;
 
   setHyprlandSocket(hs_SERVER_SOCK_FILE, ".socket.sock");
-  printf("%s\n", hs_SERVER_SOCK_FILE);
 
 	if ((hs_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
 		perror("Failed to create a socket");
@@ -71,6 +70,7 @@ static const size_t hs_size = 8000;
 char hs_buff[hs_size];
 
 const char* sendCommandandRecieve(const char* command){
+  hs_initSocketConnection();
 	int len;
 	int err = 0;
   // [flag(s)]/command args
@@ -83,6 +83,7 @@ const char* sendCommandandRecieve(const char* command){
     perror("recv");
     err = 4;
   }
+  hs_closeSocketConnection();
   return hs_buff;
 }
 

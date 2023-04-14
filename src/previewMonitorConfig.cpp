@@ -151,7 +151,7 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
     refresh(); // Clear the screen */
             // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    hs_initSocketConnection();
+    // hs_initSocketConnection();
     Json::Value root;
     if(!updateJson(root)){
       return 1;
@@ -302,10 +302,11 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
             }
             refresh();
           }
-        } else if(ch == 'u'){
+        } else if(ch == 'u') { // update to reflect current settings
           if(!updateJson(root)){
             goto error;
           }
+          // getMonitors();
           chg = true;
         }
       }
@@ -320,7 +321,7 @@ error:
     }
     endwin();
     mutex = true;
-    hs_closeSocketConnection();
+    // hs_closeSocketConnection();
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
     return 0;
 }
