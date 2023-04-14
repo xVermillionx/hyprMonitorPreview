@@ -1,5 +1,5 @@
-#ifndef HYPRSOCKET_H
-#define HYPRSOCKET_H
+#ifndef HYPRSOCKET2_H
+#define HYPRSOCKET2_H
 
 // extern "C" {
 
@@ -97,4 +97,4 @@ void setDisplayRemote(char* cur_display, std::atomic<bool>& mutex){
 
 // }
 
-#endif /* HYPRSOCKET_H */
+#endif /* HYPRSOCKET2_H */
