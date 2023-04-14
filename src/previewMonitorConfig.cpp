@@ -21,6 +21,7 @@
 
 #include "runUnixCMD.h"
 #include "hyprsocket.h"
+#include "hyprsocket2.h"
 
 enum rotation {
   NORMAL = 0,
