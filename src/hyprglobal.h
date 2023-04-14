@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 enum rotation {
   NORMAL = 0,
@@ -33,6 +34,7 @@ struct monitor {
   float scale;
   enum rotation transform;
   int id;
+  bool focused;
 };
 
 #define DEBUG_send(X) printf("%s\n", X)
