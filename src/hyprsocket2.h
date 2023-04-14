@@ -1,55 +1,53 @@
 #ifndef HYPRSOCKET2_H
 #define HYPRSOCKET2_H
 
+// ns: hs2_
+
 // extern "C" {
 
 #include <stdio.h>  // printf
 #include <sys/socket.h>
 #include <unistd.h> // close
 #include <sys/un.h> // sockaddr_un
-#include <stdlib.h> // setenv, getenv
+
+#include "hyprglobal.h"
 
 // cpp
 #include <atomic>
 
-static int fd;
-static struct sockaddr_un addr;
-static char SERVER_SOCK_FILE[100] = {0};
-static void setHyprlandSocket(char* sock_file){
-  strncpy((char*)sock_file, "/tmp/hypr/", 10);
-  strncat((char*)sock_file, getenv("HYPRLAND_INSTANCE_SIGNATURE"), 70);
-  strncat((char*)sock_file, "/.socket2.sock", 15);
-}
+static int hs2_fd;
+static struct sockaddr_un hs2_addr;
+static char hs2_SERVER_SOCK_FILE[100] = {0};
 
-void closeSocketConnection() {
-	if (fd >= 0) {
-		close(fd);
+void hs2_closeSocketConnection() {
+	if (hs2_fd >= 0) {
+		close(hs2_fd);
 	}
   printf("Closed Socket\n");
 }
 
-int initSocketConnection() {
+int hs2_initSocketConnection() {
 	int err = 0;
 
-  setHyprlandSocket(SERVER_SOCK_FILE);
+  setHyprlandSocket(hs2_SERVER_SOCK_FILE, ".socket2.sock");
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+	if ((hs2_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
 		perror("Failed to create a socket");
 		err = 1;
 	}
 
 	if (!err) {
-		memset(&addr, 0, sizeof(addr));
-		addr.sun_family = AF_UNIX;
-		strcpy(addr.sun_path, SERVER_SOCK_FILE);
-		if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
+		memset(&hs2_addr, 0, sizeof(hs2_addr));
+		hs2_addr.sun_family = AF_UNIX;
+		strcpy(hs2_addr.sun_path, hs2_SERVER_SOCK_FILE);
+		if (connect(hs2_fd, (struct sockaddr *)&hs2_addr, sizeof(hs2_addr)) == -1) {
 			perror("Could not connect to socket");
-      printf("%s\n",SERVER_SOCK_FILE);
+      printf("%s\n",hs2_SERVER_SOCK_FILE);
 			err = 2;
 		}
 	}
   // printf("Connnected: %s\n",SERVER_SOCK_FILE);
-  if(err) closeSocketConnection();
+  if(err) hs2_closeSocketConnection();
   return err;
 }
 
@@ -65,7 +63,7 @@ void setDisplayRemote(char* cur_display, std::atomic<bool>& mutex){
 	char buff[8000];
 	int err = 0;
   while (!mutex){
-    if ((len = recv(fd, buff, 8192, 0)) < 0) {
+    if ((len = recv(hs2_fd, buff, 8192, 0)) < 0) {
       perror("recv");
       err = 4;
     }

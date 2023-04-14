@@ -23,27 +23,6 @@
 #include "hyprsocket.h"
 #include "hyprsocket2.h"
 
-enum rotation {
-  NORMAL = 0,
-  DEG90,
-  DEG180,
-  DEG270,
-};
-
-struct monitor {
-  const char* name;
-  int height;
-  int width;
-  int x;
-  int y;
-  float scale;
-  enum rotation transform;
-  int id;
-  void print(){
-    std::cout << name << " " << width << "x" << height << "@" << x << "," << y << " " << scale << " " << transform << std::endl;
-  };
-};
-
 cchar_t tr,tl,br,bl,s,h;
 
 float maxfactor;
@@ -58,19 +37,19 @@ typedef struct WINDOW2 {
 
 WINDOW2 createWindow(struct monitor m){
   int height, width;
-  // float hfactor = 7000.0f;
+
   float hfactor = maxfactor;
   float wfactor = hfactor/2;
 
   if(m.transform%2){
-    height = floor(row * (m.width/wfactor/m.scale));
-    width  = floor(col  * (m.height/hfactor/m.scale));
+    height = floor(row * (m.pos.width/wfactor/m.scale));
+    width  = floor(col  * (m.pos.height/hfactor/m.scale));
   } else {
-    height = floor(row * (m.height/wfactor/m.scale));
-    width  = floor(col  * (m.width/hfactor/m.scale));
+    height = floor(row * (m.pos.height/wfactor/m.scale));
+    width  = floor(col  * (m.pos.width/hfactor/m.scale));
   }
-  int y    = floor(row * (m.y/wfactor));
-  int x    = floor(col  * (m.x/hfactor));
+  int y    = floor(row * (m.res.y/wfactor));
+  int x    = floor(col  * (m.res.x/hfactor));
 
     WINDOW *win = newwin(height, width, y, x);
     // wattron(win, COLOR_PAIR(10));
@@ -82,7 +61,7 @@ WINDOW2 createWindow(struct monitor m){
     int wcenter = width/2;
     mvwprintw(win,hcenter,wcenter-strlen(m.name)/2,m.name);
     std::stringstream s;
-    s << x << ' ' << m.width << 'x' << m.height;
+    s << x << ' ' << m.pos.width << 'x' << m.pos.height;
     std::string dim = s.str();
     mvwprintw(win,hcenter+1,wcenter-dim.length()/2,dim.c_str());
     // mvwprintw(win,1,1,m.name);
@@ -110,12 +89,23 @@ std::mutex charLock;
 // void hyprSocketFocusMonitor(char[50] &cur_mon, std::atomic<bool> &mutex) {
 void hyprSocketFocusMonitor(char* cur_mon, std::atomic<bool> &mutex) {
 // void hyprSocketFocusMonitor(std::shared_ptr<char[]> &cur_mon, std::atomic<bool> &mutex) {
-  initSocketConnection();
+  hs2_initSocketConnection();
   setDisplayRemote(cur_mon, mutex);
-  closeSocketConnection();
+  hs2_closeSocketConnection();
 }
 
-int main (int argc, char* argv[]) {
+bool updateJson(Json::Value& root){
+    Json::Reader reader;
+    bool parsingSuccessful = reader.parse(getMonitors(), root);
+    if (!parsingSuccessful)
+    {
+      std::cout << "Failed to parse"
+                << reader.getFormattedErrorMessages();
+    }
+    return parsingSuccessful;
+}
+
+int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]) {
 
     mmask_t old = 0;
 
@@ -161,16 +151,11 @@ int main (int argc, char* argv[]) {
     refresh(); // Clear the screen */
             // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
+    hs_initSocketConnection();
     Json::Value root;
-    Json::Reader reader;
-    std::string hyprmon = runUnixCommandAndCaptureOutput("hyprctl monitors -j");
-    bool parsingSuccessful = reader.parse(hyprmon.c_str(), root);
-    if (!parsingSuccessful)
-    {
-      std::cout << "Failed to parse"
-                << reader.getFormattedErrorMessages();
-      return 0;
-    }
+    if(!updateJson(root)){
+      return 1;
+    };
 
     signal(SIGWINCH, [](int sig)->void {
             endwin(); // End curses mode
@@ -245,16 +230,19 @@ int main (int argc, char* argv[]) {
               chg_border_col(4);
             }
             struct monitor m = {
-              // cur_mon.get(),
-              // pre_mon,
-              monitor["name"].asCString(),
-              monitor["height"].asInt(),
-              monitor["width"].asInt(),
-              monitor["x"].asInt(),
-              monitor["y"].asInt(),
-              monitor["scale"].asFloat(),
-              (enum rotation)monitor["transform"].asInt(),
-              monitor["id"].asInt()
+              .name = monitor["name"].asCString(),
+              .pos = {
+                .height = monitor["height"].asUInt(),
+                .width = monitor["width"].asUInt()
+              },
+              .res = {
+                .x = monitor["x"].asUInt(),
+                .y = monitor["y"].asUInt()
+              },
+              .hz = monitor["refreshRate"].asFloat(),
+              .scale = monitor["scale"].asFloat(),
+              .transform = (enum rotation)monitor["transform"].asUInt(),
+              .id = monitor["id"].asInt()
             };
             // m.print();
             windows.push_back(createWindow(m));
@@ -279,7 +267,7 @@ int main (int argc, char* argv[]) {
             if(event.bstate & BUTTON1_PRESSED){
               for(auto& win2 : windows){
                 WINDOW* win = win2.win;
-                bool focused = !std::strcmp(win2.mon.name, (char*)pre_mon);
+                // bool focused = !std::strcmp(win2.mon.name, (char*)pre_mon);
                 refresh();
                 if(wenclose(win, event.y, event.x)){
                   chg_border_col(3);
@@ -314,10 +302,16 @@ int main (int argc, char* argv[]) {
             }
             refresh();
           }
+        } else if(ch == 'u'){
+          if(!updateJson(root)){
+            goto error;
+          }
+          chg = true;
         }
       }
     } while((ch = getch()) != 'q');
 
+error:
     // Clean up and exit
     for(auto& win2 : windows){
       WINDOW* win = win2.win;
@@ -326,6 +320,7 @@ int main (int argc, char* argv[]) {
     }
     endwin();
     mutex = true;
+    hs_closeSocketConnection();
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
     return 0;
 }
