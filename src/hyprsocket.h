@@ -99,9 +99,19 @@ bool transformMonitor(const char* monitor, enum rotation rot) {
   return !strncmp(sendCommandandRecieve(cmd), "ok", 2);
 }
 
-bool setMonitor(struct monitor m) {
+bool mirrorMonitor(const char* monitor, const char* monitor_to_mirror) {
   char cmd[100];
-  if(snprintf(cmd, 100, "[]/keyword monitor %s,%dx%d@%.2f,%dx%d,%.2f,transform,%d", m.name, m.res.x, m.res.y, m.hz, m.pos.width, m.pos.height, m.scale, m.transform) < 0){
+  if(snprintf(cmd, 100, "[]/keyword monitor %s,mirror,%s", monitor, monitor_to_mirror) < 0){
+    return false;
+  };
+  return !strncmp(sendCommandandRecieve(cmd), "ok", 2);
+}
+
+bool setMonitor(struct monitor m) {
+  char cmd[200];
+  //ERROR: Check why/how pos and res have to be switched...
+  // if(snprintf(cmd, 200, "[]/keyword monitor %s,%dx%d@%.2f,%dx%d,%.2f,transform,%d", m.name, m.res.x, m.res.y, m.hz, m.pos.width, m.pos.height, m.scale, m.transform) < 0){
+  if(snprintf(cmd, 200, "[]/keyword monitor %s,%dx%d@%.2f,%dx%d,%.2f,transform,%d", m.name, m.pos.width, m.pos.height, m.hz, m.res.x, m.res.y, m.scale, m.transform) < 0){
     return false;
   };
   return !strncmp(sendCommandandRecieve(cmd), "ok", 2);

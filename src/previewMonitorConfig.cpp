@@ -103,6 +103,7 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
           }
           updateWindowsFromJson(windows, root);
           renderWindows(windows);
+          // printw("\r%s      ", cur_mon);
           // if(chg) std::this_thread::sleep_for(250ms);
           chg = false;
         }
@@ -142,7 +143,8 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
               refresh();
               if(win2) {
                 struct monitor &m = win2->mon;
-                chg = transformMonitor(m.name, ++m.transform);
+                ++(m.transform);
+                chg = setMonitor(m);
               }
               activeWin = nullptr;
             }

@@ -148,10 +148,10 @@ bool updateJson(Json::Value& root){
 
 void jsonMonitorToMonitorUpdate(struct monitor &m, const Json::Value& monitor) {
     // m.name       = monitor["name"].asCString();
-  if(m.name)
+  /* if(m.name)
     delete m.name;
   m.name = new char[monitor["name"].asString().length()];
-  strcpy(m.name, monitor["name"].asCString());
+  strcpy(m.name, monitor["name"].asCString()); */
     m.pos.height = monitor["height"].asUInt();
     m.pos.width  = monitor["width"].asUInt();
     m.res.x      = monitor["x"].asUInt();
@@ -261,13 +261,17 @@ void updateWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &roo
         wrefresh(win2->win); // Clear the old monitor model
         updateWindow(win2->win, win2->mon);
         // wrefresh(win2->win); // redraw new monitor model
+      } else { // Create Monitor if it doesnt exist
+        windows.push_back(createWindow(jsonMonitorToMonitor(monitor)));
+        wrefresh(windows.back().win); // Draw new monitor model
+        win2 = &(windows.back());
       }
     if(focused){
-      wbkgd(windows.back().win, COLOR_PAIR(4));
+      wbkgd(win2->win, COLOR_PAIR(4));
       chg_border_col(0);
     }
   }
 }
 
 
-#endif /* HELPER_H_H */
+#endif /* HELPER_H */
