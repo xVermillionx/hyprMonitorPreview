@@ -257,7 +257,10 @@ void updateWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &roo
       // win2.mon = jsonMonitorToMonitor(monitor);
       if(win2){
         jsonMonitorToMonitorUpdate(win2->mon, monitor);
+        werase(win2->win);   // Fill the old monitor model with blanks
+        wrefresh(win2->win); // Clear the old monitor model
         updateWindow(win2->win, win2->mon);
+        // wrefresh(win2->win); // redraw new monitor model
       }
     if(focused){
       wbkgd(windows.back().win, COLOR_PAIR(4));

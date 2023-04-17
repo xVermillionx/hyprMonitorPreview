@@ -103,7 +103,7 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
           }
           updateWindowsFromJson(windows, root);
           renderWindows(windows);
-          if(chg) std::this_thread::sleep_for(250ms);
+          // if(chg) std::this_thread::sleep_for(250ms);
           chg = false;
         }
         // mouse input
@@ -142,9 +142,7 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
               refresh();
               if(win2) {
                 struct monitor &m = win2->mon;
-                // FIX: not rotatting if chg is set...
                 chg = transformMonitor(m.name, ++m.transform);
-                // transformMonitor(m.name, ++m.transform);
               }
               activeWin = nullptr;
             }
