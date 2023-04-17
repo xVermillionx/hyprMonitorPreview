@@ -27,7 +27,7 @@ struct position {
 };
 
 struct monitor {
-  const char* name;
+  char* name;
   struct position pos;
   struct resolution res;
   float hz;

@@ -97,14 +97,14 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
       if(ch != ERR || chg) {
         // render
         if(ch == KEY_RESIZE || chg){
+          getmaxyx(stdscr, row, col);
           if(!updateJson(root)) {
             goto error;
           }
-          getmaxyx(stdscr, row, col);
           updateWindowsFromJson(windows, root);
           renderWindows(windows);
+          if(chg) std::this_thread::sleep_for(250ms);
           chg = false;
-          std::this_thread::sleep_for(250ms);
         }
         // mouse input
         else if (ch == KEY_MOUSE) {
@@ -143,8 +143,8 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
               if(win2) {
                 struct monitor &m = win2->mon;
                 // FIX: not rotatting if chg is set...
-                // chg = transformMonitor(m.name, ++m.transform);
-                transformMonitor(m.name, ++m.transform);
+                chg = transformMonitor(m.name, ++m.transform);
+                // transformMonitor(m.name, ++m.transform);
               }
               activeWin = nullptr;
             }

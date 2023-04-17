@@ -146,9 +146,30 @@ bool updateJson(Json::Value& root){
   return parsingSuccessful;
 }
 
+void jsonMonitorToMonitorUpdate(struct monitor &m, const Json::Value& monitor) {
+    // m.name       = monitor["name"].asCString();
+  if(m.name)
+    delete m.name;
+  m.name = new char[monitor["name"].asString().length()];
+  strcpy(m.name, monitor["name"].asCString());
+    m.pos.height = monitor["height"].asUInt();
+    m.pos.width  = monitor["width"].asUInt();
+    m.res.x      = monitor["x"].asUInt();
+    m.res.y      = monitor["y"].asUInt();
+    m.hz         = monitor["refreshRate"].asFloat();
+    m.scale      = monitor["scale"].asFloat();
+    m.transform  = (enum rotation)monitor["transform"].asUInt();
+    m.id         = monitor["id"].asInt();
+    m.focused    = monitor["focused"].asBool();
+}
+
 struct monitor jsonMonitorToMonitor(const Json::Value& monitor) {
+  char* name = new char[monitor["name"].asString().length()];
+  strcpy(name, monitor["name"].asCString());
+
   return {
-    .name = monitor["name"].asCString(),
+    // .name = monitor["name"].asCString(),
+    .name = name,
     .pos = {
       .height = monitor["height"].asUInt(),
       .width = monitor["width"].asUInt()
@@ -163,6 +184,47 @@ struct monitor jsonMonitorToMonitor(const Json::Value& monitor) {
     .id = monitor["id"].asInt(),
     .focused = monitor["focused"].asBool()
   };
+}
+
+WINDOW2* getWindowAt(std::vector<WINDOW2> &windows, const char* name){
+  /* WINDOW2* ret = nullptr;
+  for(auto& win2 : windows){
+    struct monitor& m = win2.mon;
+    if(!strcmp(name, m.name)) {
+      ret = &win2;
+      break;
+    }
+  }
+  return ret; */
+  for(auto& win2 : windows){
+    struct monitor& m = win2.mon;
+    if(!strcmp(name, m.name)) {
+      return &win2;
+    }
+  }
+  return nullptr;
+}
+
+WINDOW2* getWindowAt(std::vector<WINDOW2> &windows, int x, int y){
+  WINDOW2* ret = nullptr;
+  for(auto& win2 : windows){
+    WINDOW* win = win2.win;
+    if(wenclose(win, y, x)) {
+      ret = &win2;
+      break;
+    }
+  }
+  return ret;
+}
+
+void renderWindows(std::vector<WINDOW2> &windows, std::chrono::milliseconds delay = 0ms) {
+  refresh();
+  for(const auto& win2 : windows) {
+    WINDOW* win = win2.win;
+    wrefresh(win);
+    if(delay > 0ms) std::this_thread::sleep_for(delay);
+  }
+  refresh();
 }
 
 void createWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &root) {
@@ -191,12 +253,12 @@ void updateWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &roo
     if(focused){
       chg_border_col(4);
     }
-    for(auto& win2 : windows) {
-      if(!strcmp(win2.mon.name, monitor["name"].asCString())){
-        win2.mon = jsonMonitorToMonitor(monitor);
-        updateWindow(win2.win, win2.mon);
+      WINDOW2* win2 = getWindowAt(windows, monitor["name"].asCString());
+      // win2.mon = jsonMonitorToMonitor(monitor);
+      if(win2){
+        jsonMonitorToMonitorUpdate(win2->mon, monitor);
+        updateWindow(win2->win, win2->mon);
       }
-    }
     if(focused){
       wbkgd(windows.back().win, COLOR_PAIR(4));
       chg_border_col(0);
@@ -204,26 +266,5 @@ void updateWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &roo
   }
 }
 
-WINDOW2* getWindowAt(std::vector<WINDOW2> &windows, int x, int y){
-  WINDOW2* ret = nullptr;
-  for(auto& win2 : windows){
-    WINDOW* win = win2.win;
-    if(wenclose(win, y, x)) {
-      ret = &win2;
-      break;
-    }
-  }
-  return ret;
-}
-
-void renderWindows(std::vector<WINDOW2> &windows, std::chrono::milliseconds delay = 0ms) {
-  refresh();
-  for(const auto& win2 : windows) {
-    WINDOW* win = win2.win;
-    wrefresh(win);
-    if(delay > 0ms) std::this_thread::sleep_for(delay);
-  }
-  refresh();
-}
 
 #endif /* HELPER_H_H */
