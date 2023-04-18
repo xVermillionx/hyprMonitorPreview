@@ -234,8 +234,10 @@ void createWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &roo
       chg_border_col(4);
     }
     windows.push_back(createWindow(jsonMonitorToMonitor(monitor)));
+    WINDOW2& win2 = windows.back();
+    // setStatusMonitor(win2.mon, true);
     if(focused){
-      wbkgd(windows.back().win, COLOR_PAIR(4));
+      wbkgd(win2.win, COLOR_PAIR(4));
       chg_border_col(0);
     }
   }

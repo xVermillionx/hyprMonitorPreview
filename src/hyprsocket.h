@@ -105,6 +105,14 @@ bool mirrorMonitor(const char* monitor, const char* monitor_to_mirror) {
   return !strncmp(sendCommandandRecieve(cmd), "ok", 2);
 }
 
+bool setStatusMonitor(const char* monitor, bool enable) {
+  char cmd[100];
+  if(snprintf(cmd, 100, "[]/keyword monitor %s,disable,%s", monitor, enable) < 0){
+    return false;
+  };
+  return !strncmp(sendCommandandRecieve(cmd), "ok", 2);
+}
+
 bool setMonitor(struct monitor m) {
   char cmd[200];
   //ERROR: Check why/how pos and res have to be switched...
