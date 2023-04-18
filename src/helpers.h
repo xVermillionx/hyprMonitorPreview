@@ -250,9 +250,9 @@ void updateWindowsFromOwnMonitor(std::vector<WINDOW2> &windows){
 void updateWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &root) {
   for (const auto &monitor : root){
     bool focused = monitor["focused"].asBool();
-    if(focused){
+    /* if(focused){
       chg_border_col(4);
-    }
+    } */
       WINDOW2* win2 = getWindowAt(windows, monitor["name"].asCString());
       // win2.mon = jsonMonitorToMonitor(monitor);
       if(win2){
@@ -268,7 +268,9 @@ void updateWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &roo
       }
     if(focused){
       wbkgd(win2->win, COLOR_PAIR(4));
-      chg_border_col(0);
+      // chg_border_col(0);
+    } else {
+      wbkgd(win2->win, COLOR_PAIR(0));
     }
   }
 }
