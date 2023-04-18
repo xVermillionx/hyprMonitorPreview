@@ -80,10 +80,7 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
     std::strcpy(pre_mon, cur_mon);
     charLock.unlock();
     bool chg = false;
-    // getch();
     nodelay(stdscr, TRUE);
-
-    // goto error;
 
     // While
     WINDOW2* activeWin = nullptr;
@@ -103,8 +100,6 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
           }
           updateWindowsFromJson(windows, root);
           renderWindows(windows);
-          // printw("\r%s      ", cur_mon);
-          // if(chg) std::this_thread::sleep_for(250ms);
           chg = false;
         }
         // mouse input
@@ -119,8 +114,6 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
             if(event.bstate & BUTTON1_PRESSED){
               if(win2 != nullptr){
                 refresh();
-                // chg_border_col(3);
-                // wborder_set(win, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
                 wbkgd(win2->win, COLOR_PAIR(3));
                 wrefresh(win);
                 refresh();
@@ -128,20 +121,6 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
                 // chg = true;
               }
             } else if(event.bstate & BUTTON1_RELEASED) {
-              /* refresh();
-              for(auto& xwin2 : windows) {
-                WINDOW* xwin = xwin2.win;
-                  if(xwin2.mon.focused){
-                    chg_border_col(4);
-                  }
-                  else{
-                    chg_border_col(0);
-                  }
-                wborder_set(xwin, (const cchar_t*)&s, (const cchar_t*)&s, (const cchar_t*)&h, (const cchar_t*)&h, (const cchar_t*)&tl, (const cchar_t*)&tr, (const cchar_t*)&bl, (const cchar_t*)&br);
-                wrefresh(xwin);
-              }
-              chg_border_col(0);
-              refresh(); */
               if(win2) {
                 struct monitor &m = win2->mon;
                 ++(m.transform);

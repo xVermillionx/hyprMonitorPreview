@@ -55,12 +55,9 @@ int hs2_initSocketConnection() {
 
 typedef void(*hook_fn)(char*);
 
-// void setDisplayRemote(std::atomic<char[50]>& cur_display, std::atomic<bool>& mutex){
-// void setDisplayRemote(char[50]& cur_display, std::atomic<bool>& mutex){
 #include <mutex>
 extern std::mutex charLock;
 void setDisplayRemote(char* cur_display, std::atomic<bool>& mutex){
-// void setDisplayRemote(std::shared_ptr<char[]>& cur_display, std::atomic<bool>& mutex){
 	int len;
   const size_t size = 8000;
 	char buff[size];
@@ -70,19 +67,15 @@ void setDisplayRemote(char* cur_display, std::atomic<bool>& mutex){
       perror("recv");
       err = 4;
     }
-    // printf ("receive %d %s\n", len, buff);
     if(!err){
       if(!strncmp("focusedmon", buff, strlen("focusedmon"))){
         char* tok = strtok(buff,"\n");
         tok = strtok(tok,">>");
         tok = strtok(NULL,">>");
         tok = strtok(tok,",");
-        // strcpy(cur_display.get(), tok);
         charLock.lock();
         strcpy(cur_display, tok);
         charLock.unlock();
-        // printf ("%s",buff);
-        // printf ("%s\n",tok);
       }
       else if(!strncmp("monitorremoved", buff, strlen("monitorremoved"))){
         charLock.lock();
@@ -92,17 +85,5 @@ void setDisplayRemote(char* cur_display, std::atomic<bool>& mutex){
     }
   }
 }
-
-/* void setDisplayReadHook(hook_fn hook){
-  char cur_display[50] = {0};
-  setDisplayRemote(cur_display);
-  hook(cur_display);
-}
-
-  /* setDisplayReadHook([](char* cur_display) -> void {
-    strcpy(cur_display, cur_mon);
-  }); */
-
-// }
 
 #endif /* HYPRSOCKET2_H */

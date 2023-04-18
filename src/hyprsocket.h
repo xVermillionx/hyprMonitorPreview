@@ -64,8 +64,6 @@ int hs_initSocketConnection() {
 
 typedef void(*hook_fn)(char*);
 
-// #include <mutex>
-// extern std::mutex charLock;
 static const size_t hs_size = 8000;
 char hs_buff[hs_size];
 
