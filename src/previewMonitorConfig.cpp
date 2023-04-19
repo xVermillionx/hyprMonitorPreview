@@ -103,6 +103,18 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
           else if(ch == '-'){
             activeWin->mon.scale-=0.01f;
           }
+          else if(ch == KEY_UP){
+            activeWin->mon.res.y-=20;
+          }
+          else if(ch == KEY_DOWN){
+            activeWin->mon.res.y+=20;
+          }
+          else if(ch == KEY_LEFT){
+            activeWin->mon.res.x-=20;
+          }
+          else if(ch == KEY_RIGHT){
+            activeWin->mon.res.x+=20;
+          }
           setMonitor(activeWin->mon);
           chg=true;
           continue;
