@@ -93,6 +93,20 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
       charLock.unlock();
       if(ch != ERR || chg) {
         // render
+        if(activeWin && ch != KEY_MOUSE){
+          if(ch == 'r'){
+            ++(activeWin->mon.transform);
+          }
+          else if(ch == '+'){
+            activeWin->mon.scale+=0.01f;
+          }
+          else if(ch == '-'){
+            activeWin->mon.scale-=0.01f;
+          }
+          setMonitor(activeWin->mon);
+          chg=true;
+          continue;
+        }
         if(ch == KEY_RESIZE || chg){
           getmaxyx(stdscr, row, col);
           if(!updateJson(root)) {
@@ -100,6 +114,11 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
           }
           updateWindowsFromJson(windows, root);
           renderWindows(windows);
+          //WINDOW2& win2 = windows.back();
+          //struct monitor mon = win2.mon;
+          //updateMonitorFromWindow(win2.win, mon);
+          //printw("%dx%d,%dx%d\n", mon.pos.width, mon.pos.height, mon.res.x, mon.res.y);
+          //refresh();
           chg = false;
         }
         // mouse input
@@ -121,11 +140,11 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
                 // chg = true;
               }
             } else if(event.bstate & BUTTON1_RELEASED) {
-              if(win2) {
+              /* if(win2) {
                 struct monitor &m = win2->mon;
                 ++(m.transform);
                 chg = setMonitor(m);
-              }
+              } */
               activeWin = nullptr;
             }
           }

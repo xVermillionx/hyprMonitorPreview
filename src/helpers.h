@@ -80,6 +80,26 @@ enum rotation& operator--(enum rotation& r) {
     return r;
 }
 
+void updateMonitorFromWindow(WINDOW* win, struct monitor& m){
+  int height, width;
+  getmaxyx(win, height, width);
+  int x, y;
+  getbegyx(win, x, y);
+
+  float hfactor = maxfactor;
+  float wfactor = hfactor/2;
+
+  if(m.transform%2){
+    m.pos.height = width  * hfactor * m.scale / (float)col;
+    m.pos.width  = height * wfactor * m.scale / (float)row;
+  } else {
+    m.pos.height = height * wfactor * m.scale / (float)row;
+    m.pos.width  = width  * hfactor * m.scale / (float)col;
+  }
+  m.res.y = y * wfactor / row;
+  m.res.x = x * hfactor / col;
+}
+
 void updateWindow(WINDOW* win, struct monitor m) {
   int height, width;
 
