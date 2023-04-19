@@ -93,11 +93,11 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
       charLock.unlock();
       if(ch != ERR || chg) {
         // render
-        if(activeWin && ch != KEY_MOUSE){
+        if(activeWin && ch != KEY_MOUSE && !chg){
           if(ch == 'r'){
             ++(activeWin->mon.transform);
           }
-          else if(ch == '+'){
+          else if(ch == '=' || ch == '+'){
             activeWin->mon.scale+=0.01f;
           }
           else if(ch == '-'){
@@ -113,6 +113,8 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
             goto error;
           }
           updateWindowsFromJson(windows, root);
+          // Set activeWin color
+          if(activeWin) wbkgd(activeWin->win, COLOR_PAIR(3));
           renderWindows(windows);
           //WINDOW2& win2 = windows.back();
           //struct monitor mon = win2.mon;
@@ -145,6 +147,10 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
                 ++(m.transform);
                 chg = setMonitor(m);
               } */
+              refresh();
+              wbkgd(win2->win, COLOR_PAIR(0));
+              wrefresh(win);
+              refresh();
               activeWin = nullptr;
             }
           }
