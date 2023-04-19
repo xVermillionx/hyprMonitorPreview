@@ -148,8 +148,14 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
                 chg = setMonitor(m);
               } */
               refresh();
-              wbkgd(win2->win, COLOR_PAIR(0));
-              wrefresh(win);
+              if(win2) {
+                wbkgd(win2->win, COLOR_PAIR(0));
+                wrefresh(win);
+              }
+              if(activeWin) {
+                wbkgd(activeWin->win, COLOR_PAIR(0));
+                wrefresh(activeWin->win);
+              }
               refresh();
               activeWin = nullptr;
             }
