@@ -35,6 +35,7 @@ struct monitor {
   enum rotation transform;
   int id;
   bool focused;
+  bool dpms;
 };
 
 #define DEBUG_send(X) printf("%s\n", X)

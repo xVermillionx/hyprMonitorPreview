@@ -21,6 +21,9 @@ cchar_t tr,tl,br,bl,s,h;
 typedef struct WINDOW2 {
   struct monitor mon;
   WINDOW* win;
+  bool operator==(const WINDOW2& c) const {
+      return (this == &c);
+  }
 } WINDOW2;
 
 void start_curses(mmask_t old){
@@ -181,6 +184,7 @@ void jsonMonitorToMonitorUpdate(struct monitor &m, const Json::Value& monitor) {
     m.transform  = (enum rotation)monitor["transform"].asUInt();
     m.id         = monitor["id"].asInt();
     m.focused    = monitor["focused"].asBool();
+    m.dpms       = monitor["dpmsStatus"].asBool();
 }
 
 struct monitor jsonMonitorToMonitor(const Json::Value& monitor) {
@@ -202,7 +206,8 @@ struct monitor jsonMonitorToMonitor(const Json::Value& monitor) {
     .scale = monitor["scale"].asFloat(),
     .transform = (enum rotation)monitor["transform"].asUInt(),
     .id = monitor["id"].asInt(),
-    .focused = monitor["focused"].asBool()
+    .focused = monitor["focused"].asBool(),
+    .dpms = monitor["dpmsStatus"].asBool()
   };
 }
 

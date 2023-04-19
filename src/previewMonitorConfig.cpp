@@ -11,6 +11,8 @@
 using namespace std::chrono_literals;
 #include <sstream>
 
+#include <algorithm>
+
 #include <json/json.h>
 #include <json/reader.h>
 #include <json/writer.h>
@@ -114,6 +116,20 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
           }
           else if(ch == KEY_RIGHT){
             activeWin->mon.res.x+=20;
+          }
+          else if(ch == 'd'){
+            // setStatusMonitor(activeWin->mon.name, true);
+            setDPMSMonitor(activeWin->mon.name, !(activeWin->mon.dpms));
+            // werase(activeWin->win);
+            wbkgd(activeWin->win, COLOR_PAIR(1));
+            wrefresh(activeWin->win);
+            refresh();
+            // delwin(activeWin->win);
+            // windows.erase(std::remove(windows.begin(), windows.end(), *activeWin), windows.end());
+            // refresh();
+            activeWin=nullptr;
+            chg=true;
+            continue;
           }
           setMonitor(activeWin->mon);
           chg=true;
