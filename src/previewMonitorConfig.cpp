@@ -131,6 +131,18 @@ int main (int __attribute__((unused)) argc, char __attribute__((unused)) *argv[]
             chg=true;
             continue;
           }
+          else if(ch == 'D'){
+            setStatusMonitor(activeWin->mon.name, true);
+            werase(activeWin->win);
+            wrefresh(activeWin->win);
+            refresh();
+            delwin(activeWin->win);
+            windows.erase(std::remove(windows.begin(), windows.end(), *activeWin), windows.end());
+            refresh();
+            activeWin=nullptr;
+            chg=true;
+            continue;
+          }
           setMonitor(activeWin->mon);
           chg=true;
           continue;
