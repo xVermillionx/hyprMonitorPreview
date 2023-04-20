@@ -212,15 +212,6 @@ struct monitor jsonMonitorToMonitor(const Json::Value& monitor) {
 }
 
 WINDOW2* getWindowAt(std::vector<WINDOW2> &windows, const char* name){
-  /* WINDOW2* ret = nullptr;
-  for(auto& win2 : windows){
-    struct monitor& m = win2.mon;
-    if(!strcmp(name, m.name)) {
-      ret = &win2;
-      break;
-    }
-  }
-  return ret; */
   for(auto& win2 : windows){
     struct monitor& m = win2.mon;
     if(!strcmp(name, m.name)) {
@@ -246,7 +237,6 @@ void renderWindows(std::vector<WINDOW2> &windows, std::chrono::milliseconds dela
   refresh();
   for(const auto& win2 : windows) {
     WINDOW* win = win2.win;
-    if(!win2.mon.dpms) wbkgd(win, COLOR_PAIR(2));
     wrefresh(win);
     if(delay > 0ms) std::this_thread::sleep_for(delay);
   }
@@ -256,15 +246,15 @@ void renderWindows(std::vector<WINDOW2> &windows, std::chrono::milliseconds dela
 void createWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &root) {
   for (const Json::Value &monitor : root){
     bool focused = monitor["focused"].asBool();
-    if(focused){
-      chg_border_col(4);
-    }
+    bool dpms = monitor["dpmsStatus"].asBool();
     windows.push_back(createWindow(jsonMonitorToMonitor(monitor)));
     WINDOW2& win2 = windows.back();
-    // setStatusMonitor(win2.mon, true);
-    if(focused){
+    if(focused) {
       wbkgd(win2.win, COLOR_PAIR(4));
-      chg_border_col(0);
+    } else if(!dpms) {
+      wbkgd(win2.win, COLOR_PAIR(2));
+    } else {
+      wbkgd(win2.win, COLOR_PAIR(0));
     }
   }
 }
@@ -278,9 +268,8 @@ void updateWindowsFromOwnMonitor(std::vector<WINDOW2> &windows){
 void updateWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &root) {
   for (const auto &monitor : root){
     bool focused = monitor["focused"].asBool();
-    /* if(focused){
-      chg_border_col(4);
-    } */
+    bool dpms = monitor["dpmsStatus"].asBool();
+
       WINDOW2* win2 = getWindowAt(windows, monitor["name"].asCString());
       // win2.mon = jsonMonitorToMonitor(monitor);
       if(win2){
@@ -294,9 +283,10 @@ void updateWindowsFromJson(std::vector<WINDOW2> &windows, const Json::Value &roo
         wrefresh(windows.back().win); // Draw new monitor model
         win2 = &(windows.back());
       }
-    if(focused){
+    if(focused) {
       wbkgd(win2->win, COLOR_PAIR(4));
-      // chg_border_col(0);
+    } else if(!dpms) {
+      wbkgd(win2->win, COLOR_PAIR(2));
     } else {
       wbkgd(win2->win, COLOR_PAIR(0));
     }
