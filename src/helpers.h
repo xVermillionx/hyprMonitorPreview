@@ -246,6 +246,7 @@ void renderWindows(std::vector<WINDOW2> &windows, std::chrono::milliseconds dela
   refresh();
   for(const auto& win2 : windows) {
     WINDOW* win = win2.win;
+    if(!win2.mon.dpms) wbkgd(win, COLOR_PAIR(2));
     wrefresh(win);
     if(delay > 0ms) std::this_thread::sleep_for(delay);
   }

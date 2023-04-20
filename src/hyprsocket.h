@@ -109,7 +109,7 @@ bool mirrorMonitor(const char* monitor, const char* monitor_to_mirror) {
 #define OFF false
 bool setDPMSMonitor(const char* monitor, bool enable) {
   char cmd[100];
-  if(snprintf(cmd, 100, "[]/dispatch dpms %s %s", enable ? "on" : "off", monitor) < 0){
+  if(snprintf(cmd, 100, "[]/dispatch dpms %s,on %s", enable ? "on" : "off", monitor) < 0){
     return false;
   };
   return !strncmp(sendCommandandRecieve(cmd), "ok", 2);
