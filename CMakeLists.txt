@@ -1,5 +1,5 @@
 # CMakeLists.txt
-cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.22 FATAL_ERROR)
 project(hyprMonitorPreview)
 # project(main LANGUAGES CXX C)
 
@@ -43,7 +43,8 @@ if (EXISTS ${ROOT_DIR}/.ccls)
   file(CREATE_LINK ${CMAKE_BINARY_DIR}/compile_commands.json ${ROOT_DIR}/compile_commands.json COPY_ON_ERROR SYMBOLIC)
 endif()
 
-set(MY_LIBS -lm -ljsoncpp -lncurses)
+# set(MY_LIBS -lm -ljsoncpp -lncurses)
+set(MY_LIBS -lm -lncurses)
 
 if(CMAKE_COMPILER_IS_GNUCC)
   message(NOTICE "Using gcc")
@@ -62,9 +63,11 @@ add_custom_target(run
         DEPENDS ${EXECUTABLE_NAME}
         COMMENT "Running Program")
 
+# find_package(jsoncpp REQUIRED)
+# include_directories("${JSONCPP_INCLUDE_DIRS}")
 file(GLOB_RECURSE SOURCES "src/*.c" "src/*.cpp")
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
-target_link_libraries(${EXECUTABLE_NAME} compile_flags ${MY_LIBS})
+target_link_libraries(${EXECUTABLE_NAME} compile_flags jsoncpp_lib ${MY_LIBS})
 
 target_compile_options(${EXECUTABLE_NAME} PRIVATE
   -Wall
