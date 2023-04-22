@@ -43,8 +43,8 @@ if (EXISTS ${ROOT_DIR}/.ccls)
   file(CREATE_LINK ${CMAKE_BINARY_DIR}/compile_commands.json ${ROOT_DIR}/compile_commands.json COPY_ON_ERROR SYMBOLIC)
 endif()
 
-# set(MY_LIBS -lm -ljsoncpp -lncurses)
-set(MY_LIBS -lm -lncurses)
+set(MY_LIBS -lm -ljsoncpp -lncurses)
+# set(MY_LIBS -lm -lncurses)
 
 if(CMAKE_COMPILER_IS_GNUCC)
   message(NOTICE "Using gcc")
@@ -63,11 +63,13 @@ add_custom_target(run
         DEPENDS ${EXECUTABLE_NAME}
         COMMENT "Running Program")
 
+message("Running: " ${CMAKE_BUILD_TYPE})
 # find_package(jsoncpp REQUIRED)
 # include_directories("${JSONCPP_INCLUDE_DIRS}")
 file(GLOB_RECURSE SOURCES "src/*.c" "src/*.cpp")
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
-target_link_libraries(${EXECUTABLE_NAME} compile_flags jsoncpp_lib ${MY_LIBS})
+# target_link_libraries(${EXECUTABLE_NAME} compile_flags jsoncpp_lib ${MY_LIBS})
+target_link_libraries(${EXECUTABLE_NAME} compile_flags ${MY_LIBS})
 
 target_compile_options(${EXECUTABLE_NAME} PRIVATE
   -Wall
@@ -76,6 +78,10 @@ target_compile_options(${EXECUTABLE_NAME} PRIVATE
   -Wconversion
   -Werror=vla
   -lstdc++
+  $<$<CONFIG:Debug>:-g>
+  $<$<CONFIG:Debug>:-O0>
+  $<$<CONFIG:Release>:-O3>
+  # $<$<CONFIG:Release>:-O2>
 )
 
 target_compile_definitions(${EXECUTABLE_NAME} PRIVATE
@@ -92,4 +98,14 @@ add_custom_target(uninstall
         COMMAND rm -rf ${INSTALLPATH}/${EXECUTABLE_NAME}
         DEPENDS ${EXECUTABLE_NAME}
         COMMENT "Installing Program")
+
+add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
+             COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --cyan
+             "Built ${CMAKE_BUILD_TYPE}")
+
+# Dont forget to set tty /dev/pts/\d for the output...
+add_custom_target(debug
+        COMMAND gdb ${CMAKE_BINARY_DIR}/${EXECUTABLE_NAME}
+        DEPENDS ${EXECUTABLE_NAME}
+        COMMENT "Debugging Programm")
 

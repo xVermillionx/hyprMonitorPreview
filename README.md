@@ -6,7 +6,8 @@ A small ncurses preview of the set monitor layout (hyprland only)
 ## Build && Installation
 
 ```bash
-cmake -B build .
+cmake -B build . -DCMAKE_BUILD_TYPE=Release
+cmake -B build . -DCMAKE_BUILD_TYPE=Debug
 
 make -C build
 ```
