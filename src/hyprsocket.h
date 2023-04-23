@@ -31,6 +31,7 @@ int hs_initSocketConnection() {
 
   setHyprlandSocket(hs_SERVER_SOCK_FILE, ".socket.sock");
 
+  snprintf(hs_CLIENT_SOCK_FILE+strlen(hs_CLIENT_SOCK_FILE), sizeof(hs_CLIENT_SOCK_FILE) - strlen(hs_CLIENT_SOCK_FILE), ".%d", getpid());
 	if ((hs_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
 		perror("Failed to create a socket");
 		err = 1;
